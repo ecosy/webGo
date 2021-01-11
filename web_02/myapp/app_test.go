@@ -1,9 +1,11 @@
 package myapp
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -56,4 +58,25 @@ func TestIndexPathHandler(t *testing.T) {
 	// data Body 리턴값과 일치하는지 비교
 	assert.Equal("hello world", string(data))
 
+}
+
+func TestFooHandler_WithJson(t *testing.T) {
+	assert := assert.New(t)
+
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/foo",
+		strings.NewReader(`{"first_name":"ryan",
+		"last_name":"lee",
+		"email":"kia@kia.com"}`))
+
+	mux := NewHttpHandler()
+	mux.ServeHTTP(res, req)
+
+	assert.Equal(http.StatusCreated, res.Code)
+
+	user := new(User)
+	err := json.NewDecoder(res.Body).Decode(user)
+	assert.Nil(err)
+	assert.Equal("ryan", user.FirstName)
+	assert.Equal("lee", user.LastName)
 }
